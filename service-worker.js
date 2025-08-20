@@ -1,27 +1,15 @@
-const CACHE_NAME = "poscemal-v1";
-const urlsToCache = [
-  "/",
-  "/index.html",
-  "/main.js",
-  "/manifest.webmanifest",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png"
-];
-
-// Instal service worker
-self.addEventListener("install", event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(urlsToCache);
+self.addEventListener("install", (e) => {
+  e.waitUntil(
+    caches.open("cemal-cache").then((cache) => {
+      return cache.addAll(["/", "/index.html"]);
     })
   );
 });
 
-// Ambil cache saat offline
-self.addEventListener("fetch", event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
+self.addEventListener("fetch", (e) => {
+  e.respondWith(
+    caches.match(e.request).then((resp) => {
+      return resp || fetch(e.request);
     })
   );
 });
