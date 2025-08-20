@@ -1,81 +1,14 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>POS Cemal-Cemil</title>
-
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icons/icon-192.png">
-  <meta name="theme-color" content="#4CAF50"/>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    h1 {
-      color: #4CAF50;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: center;
-    }
-    th {
-      background: #f4f4f4;
-    }
-    .total {
-      text-align: right;
-      margin-top: 15px;
-      font-size: 18px;
-      font-weight: bold;
-    }
-    button {
-      margin: 5px;
-      padding: 10px 15px;
-      border: none;
-      background: #4CAF50;
-      color: white;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-    button:hover {
-      background: #45a049;
-    }
-  </style>
-</head>
-<body>
-  <h1>POS Cemal-Cemil</h1>
-
-  <div>
-    <button onclick="tambahItem('Bakso Bakar', 2500)">+ Bakso Bakar (Rp2.500)</button>
-    <button onclick="tambahItem('Sosis Bakar', 2500)">+ Sosis Bakar (Rp2.500)</button>
-    <button onclick="tambahItem('Sempol Ayam', 2000)">+ Sempol Ayam (Rp2.000)</button>
-    <button onclick="tambahItem('Es Kue Gabus Pelangi', 3000)">+ Es Kue Gabus (Rp3.000)</button>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>No</th>
-        <th>Item</th>
-        <th>Harga</th>
-        <th>Jumlah</th>
-        <th>Subtotal</th>
-        <th>Aksi</th>
-      </tr>
-    </thead>
-    <tbody id="tabelKeranjang"></tbody>
-  </table>
-
-  <div class="total" id="totalHarga">Total: Rp0</div>
-
-  <script src="main.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cemal-Cemil POS</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icons/icon-192.png" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
