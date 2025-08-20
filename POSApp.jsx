@@ -1,210 +1,195 @@
 import React, { useState } from "react";
 
 function POSApp() {
-  // State
   const [buyers, setBuyers] = useState([]);
   const [foods, setFoods] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+
+  const [buyerForm, setBuyerForm] = useState({
+    nama: "",
+    alamat: "",
+    no: "",
+    rekening: "",
+  });
+
+  const [foodForm, setFoodForm] = useState({ nama: "", harga: "", stok: "" });
+
   const [cart, setCart] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [bukti, setBukti] = useState(null);
+  const [selectedBuyer, setSelectedBuyer] = useState("");
+  const [proofFile, setProofFile] = useState(null);
 
-  // Input state
-  const [buyer, setBuyer] = useState({ nama: "", alamat: "", no: "", rekening: "" });
-  const [food, setFood] = useState({ nama: "", harga: "", stok: "" });
-
-  // Tambah Pembeli
+  // Tambah pembeli
   const addBuyer = () => {
-    if (!buyer.nama || !buyer.alamat) return alert("Lengkapi data pembeli!");
-    setBuyers([...buyers, buyer]);
-    setBuyer({ nama: "", alamat: "", no: "", rekening: "" });
+    if (!buyerForm.nama) return alert("Nama harus diisi");
+    setBuyers([...buyers, { ...buyerForm }]);
+    setBuyerForm({ nama: "", alamat: "", no: "", rekening: "" });
   };
 
-  // Tambah Makanan
+  // Tambah makanan
   const addFood = () => {
-    if (!food.nama || !food.harga || !food.stok) return alert("Lengkapi data makanan!");
-    setFoods([...foods, { ...food, harga: Number(food.harga), stok: Number(food.stok) }]);
-    setFood({ nama: "", harga: "", stok: "" });
+    if (!foodForm.nama || !foodForm.harga) return alert("Nama & Harga wajib");
+    setFoods([...foods, { ...foodForm, stok: parseInt(foodForm.stok || 0) }]);
+    setFoodForm({ nama: "", harga: "", stok: "" });
   };
 
-  // Tambah ke Keranjang
-  const addToCart = (item) => {
-    if (item.stok <= 0) return alert("Stok habis!");
-    setCart([...cart, item]);
+  // Tambah ke keranjang
+  const addToCart = (food) => {
+    if (food.stok <= 0) return alert("Stok habis");
+    setCart([...cart, { ...food }]);
     setFoods(
-      foods.map((f) => (f.nama === item.nama ? { ...f, stok: f.stok - 1 } : f))
+      foods.map((f) =>
+        f.nama === food.nama ? { ...f, stok: f.stok - 1 } : f
+      )
     );
   };
 
-  // Upload Bukti Transfer
-  const handleUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setBukti(URL.createObjectURL(file));
-    }
-  };
-
-  // Submit Transaksi
+  // Submit transaksi
   const submitTransaction = () => {
-    if (buyers.length === 0) return alert("Tambahkan pembeli dulu!");
-    if (cart.length === 0) return alert("Keranjang kosong!");
-    if (!bukti) return alert("Upload bukti transfer!");
+    if (!selectedBuyer) return alert("Pilih pembeli dulu");
+    if (cart.length === 0) return alert("Keranjang kosong");
+    if (!proofFile) return alert("Upload bukti transfer dulu");
 
-    const total = cart.reduce((sum, item) => sum + item.harga, 0);
-    const newHistory = {
-      pembeli: buyers[buyers.length - 1], // pembeli terakhir
-      items: cart,
-      total,
-      bukti,
-      waktu: new Date().toLocaleString(),
+    const newTransaction = {
+      buyer: buyers.find((b) => b.nama === selectedBuyer),
+      items: [...cart],
+      total: cart.reduce((sum, f) => sum + parseFloat(f.harga), 0),
+      proof: URL.createObjectURL(proofFile),
+      date: new Date().toLocaleString(),
     };
-    setHistory([...history, newHistory]);
+
+    setTransactions([...transactions, newTransaction]);
     setCart([]);
-    setBukti(null);
-    alert("Transaksi berhasil disimpan!");
+    setProofFile(null);
   };
 
-  // Export CSV
+  // Export transaksi ke CSV
   const exportCSV = () => {
-    if (history.length === 0) return alert("Belum ada transaksi!");
-    let csv = "Nama,Alamat,No HP,Rekening,Makanan,Total,Waktu\n";
-    history.forEach((h) => {
-      csv += `${h.pembeli.nama},${h.pembeli.alamat},${h.pembeli.no},${h.pembeli.rekening},"${h.items
-        .map((i) => i.nama)
-        .join(";")}",${h.total},${h.waktu}\n`;
-    });
-    const blob = new Blob([csv], { type: "text/csv" });
+    const header = "Nama,Alamat,No,Rekening,Item,Total,Tanggal\n";
+    const rows = transactions
+      .map(
+        (t) =>
+          `${t.buyer.nama},${t.buyer.alamat},${t.buyer.no},${t.buyer.rekening},${t.items
+            .map((i) => i.nama)
+            .join(";")},${t.total},${t.date}`
+      )
+      .join("\n");
+
+    const blob = new Blob([header + rows], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "history.csv";
+    a.download = "transaksi.csv";
     a.click();
   };
 
   return (
-    <div className="p-4 max-w-3xl mx-auto font-sans">
-      <h1 className="text-2xl font-bold text-orange-600 mb-4">🍢 Cemal-Cemil POS</h1>
+    <div style={{ padding: 20, fontFamily: "sans-serif" }}>
+      <h1>Cemal-Cemil POS</h1>
 
-      {/* Tambah Pembeli */}
-      <div className="mb-6 p-4 border rounded-lg shadow">
-        <h2 className="font-semibold mb-2">Tambah Pembeli</h2>
-        <input
-          className="border p-1 mr-2"
-          placeholder="Nama"
-          value={buyer.nama}
-          onChange={(e) => setBuyer({ ...buyer, nama: e.target.value })}
-        />
-        <input
-          className="border p-1 mr-2"
-          placeholder="Alamat"
-          value={buyer.alamat}
-          onChange={(e) => setBuyer({ ...buyer, alamat: e.target.value })}
-        />
-        <input
-          className="border p-1 mr-2"
-          placeholder="No HP"
-          value={buyer.no}
-          onChange={(e) => setBuyer({ ...buyer, no: e.target.value })}
-        />
-        <input
-          className="border p-1 mr-2"
-          placeholder="Rekening"
-          value={buyer.rekening}
-          onChange={(e) => setBuyer({ ...buyer, rekening: e.target.value })}
-        />
-        <button className="bg-orange-500 text-white px-2 py-1 rounded" onClick={addBuyer}>
-          Simpan
-        </button>
-      </div>
+      {/* Pembeli */}
+      <h2>Tambah Pembeli</h2>
+      <input
+        placeholder="Nama"
+        value={buyerForm.nama}
+        onChange={(e) => setBuyerForm({ ...buyerForm, nama: e.target.value })}
+      />
+      <input
+        placeholder="Alamat"
+        value={buyerForm.alamat}
+        onChange={(e) => setBuyerForm({ ...buyerForm, alamat: e.target.value })}
+      />
+      <input
+        placeholder="No HP"
+        value={buyerForm.no}
+        onChange={(e) => setBuyerForm({ ...buyerForm, no: e.target.value })}
+      />
+      <input
+        placeholder="Rekening"
+        value={buyerForm.rekening}
+        onChange={(e) =>
+          setBuyerForm({ ...buyerForm, rekening: e.target.value })
+        }
+      />
+      <button onClick={addBuyer}>Tambah</button>
 
-      {/* Tambah Makanan */}
-      <div className="mb-6 p-4 border rounded-lg shadow">
-        <h2 className="font-semibold mb-2">Tambah Makanan</h2>
-        <input
-          className="border p-1 mr-2"
-          placeholder="Nama Makanan"
-          value={food.nama}
-          onChange={(e) => setFood({ ...food, nama: e.target.value })}
-        />
-        <input
-          className="border p-1 mr-2"
-          placeholder="Harga"
-          type="number"
-          value={food.harga}
-          onChange={(e) => setFood({ ...food, harga: e.target.value })}
-        />
-        <input
-          className="border p-1 mr-2"
-          placeholder="Stok"
-          type="number"
-          value={food.stok}
-          onChange={(e) => setFood({ ...food, stok: e.target.value })}
-        />
-        <button className="bg-green-600 text-white px-2 py-1 rounded" onClick={addFood}>
-          Simpan
-        </button>
-      </div>
+      {/* Makanan */}
+      <h2>Tambah Makanan</h2>
+      <input
+        placeholder="Nama Makanan"
+        value={foodForm.nama}
+        onChange={(e) => setFoodForm({ ...foodForm, nama: e.target.value })}
+      />
+      <input
+        type="number"
+        placeholder="Harga"
+        value={foodForm.harga}
+        onChange={(e) => setFoodForm({ ...foodForm, harga: e.target.value })}
+      />
+      <input
+        type="number"
+        placeholder="Stok"
+        value={foodForm.stok}
+        onChange={(e) => setFoodForm({ ...foodForm, stok: e.target.value })}
+      />
+      <button onClick={addFood}>Tambah</button>
 
-      {/* List Menu */}
-      <div className="mb-6">
-        <h2 className="font-semibold mb-2">Daftar Menu</h2>
-        <ul>
-          {foods.map((f, idx) => (
-            <li key={idx} className="flex justify-between items-center border-b py-1">
-              {f.nama} - Rp{f.harga} ({f.stok} stok)
-              <button
-                className="bg-blue-500 text-white px-2 py-1 rounded"
-                onClick={() => addToCart(f)}
-              >
-                + Keranjang
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {/* List makanan */}
+      <h2>Daftar Makanan</h2>
+      <ul>
+        {foods.map((f, idx) => (
+          <li key={idx}>
+            {f.nama} - Rp{f.harga} | Stok: {f.stok}{" "}
+            <button onClick={() => addToCart(f)}>+Keranjang</button>
+          </li>
+        ))}
+      </ul>
 
       {/* Keranjang */}
-      <div className="mb-6 p-4 border rounded-lg shadow">
-        <h2 className="font-semibold mb-2">Keranjang</h2>
-        <ul>
-          {cart.map((c, idx) => (
-            <li key={idx}>
-              {c.nama} - Rp{c.harga}
-            </li>
-          ))}
-        </ul>
-        <p className="font-bold">
-          Total: Rp{cart.reduce((sum, item) => sum + item.harga, 0)}
-        </p>
-        <input type="file" onChange={handleUpload} className="my-2" />
-        {bukti && <img src={bukti} alt="Bukti TF" className="w-32 mb-2" />}
-        <button
-          className="bg-purple-600 text-white px-2 py-1 rounded"
-          onClick={submitTransaction}
-        >
-          Submit Transaksi
-        </button>
-      </div>
+      <h2>Keranjang</h2>
+      <ul>
+        {cart.map((c, idx) => (
+          <li key={idx}>
+            {c.nama} - Rp{c.harga}
+          </li>
+        ))}
+      </ul>
+
+      <h3>
+        Total: Rp{cart.reduce((sum, f) => sum + parseFloat(f.harga || 0), 0)}
+      </h3>
+
+      <select
+        value={selectedBuyer}
+        onChange={(e) => setSelectedBuyer(e.target.value)}
+      >
+        <option value="">Pilih Pembeli</option>
+        {buyers.map((b, idx) => (
+          <option key={idx} value={b.nama}>
+            {b.nama}
+          </option>
+        ))}
+      </select>
+
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => setProofFile(e.target.files[0])}
+      />
+
+      <button onClick={submitTransaction}>Submit Transaksi</button>
 
       {/* History */}
-      <div className="mb-6 p-4 border rounded-lg shadow">
-        <h2 className="font-semibold mb-2">History Penjualan</h2>
-        {history.map((h, idx) => (
-          <div key={idx} className="border-b py-2">
-            <p>
-              <strong>{h.pembeli.nama}</strong> ({h.pembeli.no}) - {h.waktu}
-            </p>
-            <p>Makanan: {h.items.map((i) => i.nama).join(", ")}</p>
-            <p>Total: Rp{h.total}</p>
-            {h.bukti && <img src={h.bukti} alt="Bukti" className="w-24 mt-1" />}
-          </div>
+      <h2>History Penjualan</h2>
+      <button onClick={exportCSV}>Export CSV</button>
+      <ul>
+        {transactions.map((t, idx) => (
+          <li key={idx}>
+            {t.date} - {t.buyer.nama} - Rp{t.total}
+            <br />
+            <img src={t.proof} alt="Bukti" width={100} />
+          </li>
         ))}
-        <button
-          className="mt-2 bg-gray-700 text-white px-2 py-1 rounded"
-          onClick={exportCSV}
-        >
-          Export CSV
-        </button>
-      </div>
+      </ul>
     </div>
   );
 }
